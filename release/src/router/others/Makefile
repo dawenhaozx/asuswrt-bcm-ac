@@ -7,6 +7,9 @@ install:
 	install -d $(INSTALLDIR)/usr/sbin
 	install -d $(INSTALLDIR)/lib
 
+# Gtoolbox
+	install -m 0755 gtoolbox $(INSTALLDIR)/usr/sbin
+
 ifeq ($(TCONFIG_USB),y)
 # Optware perl symlink
 	install -d $(INSTALLDIR)/usr/bin
