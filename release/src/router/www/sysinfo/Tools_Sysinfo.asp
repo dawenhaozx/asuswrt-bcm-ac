@@ -257,6 +257,22 @@ function show_etherstate(){
 				}
 			}
 			port = line[1].replace(":","");
+
+			if (based_modelid == "RT-AC3100") {
+				if (port > 3) {	//int ports[SWPORT_COUNT] = { 3, 1, 0, 2, 5 };
+					continue;
+				} else if (port == "3") {
+					wan_array = [ "WAN", (line[7] & 0xFFF), state2, devicename];
+					continue;
+				} else {
+					if (port == "0")
+						port_array.unshift(["LAN2 ", (line[7] & 0xFFF), state2, devicename]);
+					else if (port == "1")
+						port_array.unshift(["LAN1 ", (line[7] & 0xFFF), state2, devicename]);
+					else if (port == "2")
+						port_array.push(["LAN3 ", (line[7] & 0xFFF), state2, devicename]);
+				}
+			} else {
 			if (port == "8") {		// CPU Port
 				continue;
 			} else if ((based_modelid == "RT-AC56U") || (based_modelid == "RT-AC56S") || (based_modelid == "RT-AC88U") || (based_modelid == "RT-AC3100")) {
@@ -282,6 +298,7 @@ function show_etherstate(){
 				port_array.unshift(["LAN "+ port, (line[7] & 0xFFF), state2, devicename]);
 			else
 				port_array.push(["LAN " + port, (line[7] & 0xFFF), state2, devicename]);
+                        }
 		}
 	}
 	if (based_modelid == "RT-AC88U")

@@ -142,7 +142,9 @@ function create_stb_select(switch_stb_x){
 				selected = true;
 
 			var option = new Option(text, option_list[i].value, false, selected);
-			select.options.add(option);
+			if(!(based_modelid == "RT-AC3100" && text.indexOf("LAN4") != -1)){
+				select.options.add(option);
+			}
 		}
 	}
 
@@ -217,7 +219,9 @@ function set_manual_items(){
 			port_name = "LAN Port " + manual_settings.iptv_port.substr(3);
 		else
 			port_name = manual_settings.iptv_port;
-		document.getElementById("wan_iptv_port4_x").style.display = "";
+		if(based_modelid != "RT-AC3100"){
+			document.getElementById("wan_iptv_port4_x").style.display = "";
+		}
 		document.getElementById("iptv_port4").innerHTML = port_name;
 	}
 

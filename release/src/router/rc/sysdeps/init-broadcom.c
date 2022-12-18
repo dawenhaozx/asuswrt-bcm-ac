@@ -1431,7 +1431,7 @@ void generate_switch_para(void)
 			hw_name = "et1";
 #else	// RTCONFIG_EXT_RTL8365MB
 			/* WAN L1 L2 L3 L4 CPU */	/*vision: WAN L1 L2 L3 L4 */
-			int ports[SWPORT_COUNT] = { 4, 3, 2, 1, 0, 5 };
+			int ports[SWPORT_COUNT] = { 3, 1, 0, 2, -1, 5 };
 			hw_name = "et0";
 #endif
 			int wancfg = (!nvram_match("switch_wantag", "none")&&!nvram_match("switch_wantag", "")&&!nvram_match("switch_wantag", "hinet")) ? SWCFG_DEFAULT : cfg;
@@ -4862,6 +4862,9 @@ void init_others(void)
 #endif
 #ifdef RTAC68U
 	ac68u_cofs();
+#endif
+#if defined(RTAC3100) && defined(RTCONFIG_ROMCFE)
+	update_cfe_k3();
 #endif
 }
 #endif	// HND_ROUTER

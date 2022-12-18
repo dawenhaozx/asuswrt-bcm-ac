@@ -889,6 +889,9 @@ int led_control(int which, int mode)
 int do_led_control(int which, int mode)
 #endif
 {
+#ifdef RTAC3100
+	return 0; //K3 have no leds
+#endif
 	int use_gpio, gpio_nr;
 	int v = (mode == LED_OFF)? 0:1;
 	// Did the user disable the leds?

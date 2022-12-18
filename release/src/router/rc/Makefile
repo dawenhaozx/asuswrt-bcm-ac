@@ -315,7 +315,9 @@ ifeq ($(RTCONFIG_NETOOL),y)
 OBJS += netool.o linklist.o
 LDFLAGS += -lpthread
 endif
-
+ifeq ($(RTAC3100),y)
+OBJS += k3.o
+endif
 ifeq ($(RTAC1200G),y)
 OBJS += mtd_sflash.o
 else
