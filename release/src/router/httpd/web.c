@@ -5505,6 +5505,14 @@ static int ej_update_variables(int eid, webs_t wp, int argc, char_t **argv)
 				else
 					strlcpy(notify_cmd, action_script, sizeof(notify_cmd));
 
+#if defined(RTAC3100)
+				if(strstr(action_script,"restart_screen"))
+				{
+					notify_cmd[0] = '\0';
+					doSystem("k3screen");
+				}
+#endif
+
 				if(strcmp(action_script, "saveNvram"))
 				{
 #ifdef RTCONFIG_CFGSYNC
@@ -33668,6 +33676,7 @@ struct useful_redirect_list useful_redirect_lists[] = {
 	{"aidisk.asp", NULL},
 	{"AiProtection_**.asp", NULL},
 	{"APP_Installation.asp", NULL},
+	{"Tools_K3Screen.asp", NULL},
 	{"cloud_main.asp", NULL},
 	{"cloud_router_sync.asp", NULL},
 	{"cloud_settings.asp", NULL},
@@ -33710,6 +33719,7 @@ struct AiMesh_whitelist AiMesh_whitelists[] = {
 	{"appGet.cgi", NULL},
 	{"start_apply.htm", NULL},
 	{"APP_Installation.asp", NULL},
+    {"Tools_K3Screen.asp", NULL},
 	{"Advanced_SwitchCtrl_Content.asp", NULL},
 	{"update_appstate.asp", NULL},
 	{"update_applist.asp", NULL},

@@ -194,6 +194,8 @@ define(function(){
 				tab: [
 					{url: "Tools_Sysinfo.asp", tabName: "Sysinfo"},
 					{url: "Softcenter.asp", tabName: "<#Softcenter_tool#>"},
+					{url: "Tools_OtherSettings.asp", tabName: "Other Settings"},
+					{url: "Tools_K3Screen.asp", tabName: "<#K3Screen#>"},
 					{url: "NULL", tabName: "__INHERIT__"}
 				] 
 			},

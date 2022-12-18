@@ -956,6 +956,10 @@ obj-y += ipset-7.6 libmnl-1.0.4 libnfnetlink-1.0.1
 endif
 obj-$(RTCONFIG_ENTWARE) += libiconv-1.14
 obj-y += libpasswd
+ifeq ($(RTAC3100),y)
+obj-y += k3screenctrl k3util
+#obj-y += bash
+endif
 obj-y += httpd json-c
 obj-$(RTCONFIG_VISUALIZATION) += sqlite3 json-c libxml2 visdcoll visdcon
 obj-y += www
@@ -2663,6 +2667,10 @@ roldconf: config/conf
 	$(MAKE) shared-clean libdisk-clean rc-clean nvram$(BCMEX)$(EX7)-clean httpd-clean prebuilt-clean libbcmcrypto-clean
 #	@$(MAKE) iptables-clean ebtables-clean pppd-clean zebra-clean openssl-clean mssl-clean pppd-clean
 	$(MAKE) dnsmasq-clean iproute2-clean networkmap-clean
+ifeq ($(RTAC3100),y)
+	$(MAKE) k3screenctrl-clean
+#	$(MAKE) bash-clean
+endif
 ifeq ($(RTCONFIG_BCMARM),y)
 	$(MAKE) compressed-clean
 endif
@@ -2741,6 +2749,25 @@ oldconfig oldconf: koldconf roldconf bboldconf
 #
 # overrides and extra dependencies
 #
+
+bash/Makefile:
+	cd bash && CC=$(CC) STRIP=$(STRIP) \
+		CFLAGS=" -D_GNU_SOURCE $(EXTRACFLAGS) -I$(SRCBASE)/include -I$(KERNEL_HEADER_DIR)" \
+		LDFLAGS="$(EXTRALDFLAGS)" \
+		$(CONFIGURE) --target=arm-linux --host=arm-linux --build=x86_64-linux-gnu --prefix=""
+
+bash: bash/Makefile
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+bash-clean:
+	[ ! -f bash/Makefile ] || $(MAKE) -C bash -f Makefile distclean
+
+bash-install: bash
+	install -D bash/bash $(INSTALLDIR)/bash/bin/bash
+	$(STRIP) $(INSTALLDIR)/bash/bin/bash
+
+busybox-clean:
+	$(MAKE) -C bash distclean
 
 ifeq ($(HND_ROUTER),y)
 define makeBusybox
@@ -3778,6 +3805,20 @@ smartdns-install: smartdns
 	install -D smartdns/src/smartdns $(INSTALLDIR)/smartdns/usr/sbin/smartdns
 	$(STRIP) $(INSTALLDIR)/smartdns/usr/sbin/smartdns
 endif
+
+k3screenctrl/Makefile:
+	cd k3screenctrl && autoreconf -i -f && CC=$(CC) STRIP=$(STRIP) \
+		$(CONFIGURE) --target=arm-linux --host=arm-linux --build=x86_64-linux-gnu --prefix=""
+
+k3screenctrl: k3screenctrl/Makefile
+	$(MAKE) -C $@ && $(MAKE) $@-stage
+
+k3screenctrl-clean:
+	[ ! -f k3screenctrl/Makefile ] || $(MAKE) -C k3screenctrl -f Makefile distclean
+
+k3screenctrl-install: k3screenctrl
+	install -D k3screenctrl/src/k3screenctrl $(INSTALLDIR)/k3screenctrl/usr/sbin/k3screenctrl
+	$(STRIP) $(INSTALLDIR)/k3screenctrl/usr/sbin/k3screenctrl
 
 miniupnpd/config.h: shared/version.h
 	cd miniupnpd && ./configure --vendorcfg --leasefile --portinuse $(if $(RTCONFIG_AURASYNC),--aurasync,) $(if $(RTCONFIG_GEFORCENOW),--nvgfn) --iptablespath=$(TOP)/$(IPTABLES)

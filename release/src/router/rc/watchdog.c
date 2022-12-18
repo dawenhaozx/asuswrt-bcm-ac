@@ -323,7 +323,7 @@ static int no_assoc_check = 0;
 
 void led_table_ctrl(int on_off);
 
-#if defined(RTAC1200G) || defined(RTAC1200GP)
+#if defined(RTAC1200G) || defined(RTAC1200GP) || defined(RTAC3100)
 #define WDG_MONITOR_PERIOD 60 /* second */
 static int wdg_timer_alive = 1;
 #endif
@@ -5326,7 +5326,7 @@ static void catch_sig(int sig)
 
 		wsc_timeout = WPS_TIMEOUT_COUNT;
 	}
-#if defined(RTAC1200G) || defined(RTAC1200GP)
+#if defined(RTAC1200G) || defined(RTAC1200GP) || defined(RTAC3100)
 	else if (sig == SIGHUP)
 	{
 		dbG("[watchdog] Reset alarm timer...\n");
@@ -6580,7 +6580,7 @@ void init_sig()
 		|| sig == SIGUSR2
 		|| sig == SIGTSTP
 		|| sig == SIGALRM
-#if defined(RTAC1200G) || defined(RTAC1200GP)
+#if defined(RTAC1200G) || defined(RTAC1200GP) || defined(RTAC3100)
 		|| sig == SIGHUP
 #endif
 #ifdef RTCONFIG_RALINK
@@ -6599,7 +6599,7 @@ void init_sig()
 #if defined(RTCONFIG_QCA)
 	g_t1 = uptime();
 #endif
-#if defined(RTAC1200G) || defined(RTAC1200GP)
+#if defined(RTAC1200G) || defined(RTAC1200GP) || defined(RTAC3100)
 	fn_acts[SIGHUP]  = catch_sig;
 #endif
 #ifdef RTCONFIG_RALINK
@@ -6612,7 +6612,7 @@ void init_sig()
 	sigaddset(&sigs_to_catch, SIGUSR2);
 	sigaddset(&sigs_to_catch, SIGTSTP);
 	sigaddset(&sigs_to_catch, SIGALRM);
-#if defined(RTAC1200G) || defined(RTAC1200GP)
+#if defined(RTAC1200G) || defined(RTAC1200GP) || defined(RTAC3100)
 	sigaddset(&sigs_to_catch, SIGHUP);
 #endif
 #ifdef RTCONFIG_RALINK
@@ -6621,7 +6621,7 @@ void init_sig()
 }
 
 #ifdef SW_DEVLED
-void init_sig_swled() 
+void init_sig_swled()
 {
 	int sig;
         for (sig = 0; sig < (_NSIG - 1); sig++) {
@@ -6643,7 +6643,7 @@ void init_sig_swled()
 }
 #endif
 
-#if defined(RTAC1200G) || defined(RTAC1200GP)
+#if defined(RTAC1200G) || defined(RTAC1200GP) || defined(RTAC3100)
 void wdg_heartbeat(int sig)
 {
 	if(factory_debug())
@@ -7425,6 +7425,33 @@ static void entware_sig_check()
 				nvram_set_int("entware_stop_sig", 0);
 			}
 		}
+	}
+}
+#endif
+
+#ifdef RTAC3100
+void k3screen_check()
+{
+	if (nvram_match("screen_enable", "0"))
+	{
+		return;
+	}
+	/*if (!pids("k3screenbg"))
+	{
+		char *k3screend_argv[] = { "k3screenbg", NULL };
+		pid_t pid;
+		_eval(k3screend_argv, NULL, 0, &pid);
+		logmessage("watchdog", "restart k3screenbg");
+	}*/
+	if (!pids("k3screenctrl"))
+	{
+		char timeout[6];
+		int time = nvram_get_int("screen_timeout");
+		snprintf(timeout, sizeof(timeout), "-m%d", time);
+		char *k3screenctrl_argv[] = { "k3screenctrl", timeout, NULL };
+		pid_t pid;
+		_eval(k3screenctrl_argv, NULL, 0, &pid);
+		logmessage("watchdog", "restart k3screenctrl");
 	}
 }
 #endif
@@ -10062,6 +10089,9 @@ wdp:
 #ifdef RTCONFIG_NEW_USER_LOW_RSSI
 	roamast_check();
 #endif
+#ifdef RTAC3100
+	k3screen_check();
+#endif
 #if defined(RPAX56)
 	amas_linkctrl();
 #endif
@@ -10114,7 +10144,7 @@ wdp:
 	ntevent_disk_usage_check();
 #endif
 
-#if defined(RTAC1200G) || defined(RTAC1200GP)
+#if defined(RTAC1200G) || defined(RTAC1200GP) || defined(RTAC3100)
 	if (pids("wdg_monitor"))
 		kill_pidfile_s("/var/run/wdg_monitor.pid", SIGUSR1);
 #endif
@@ -10378,7 +10408,7 @@ int sw_devled_main(int argc, char *argv[])
 }
 #endif
 
-#if defined(RTAC1200G) || defined(RTAC1200GP)
+#if defined(RTAC1200G) || defined(RTAC1200GP) || defined(RTAC3100)
 /* workaroud of watchdog timer shutdown */
 int wdg_monitor_main(int argc, char *argv[])
 {

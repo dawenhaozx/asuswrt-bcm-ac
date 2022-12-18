@@ -2298,7 +2298,7 @@ extern int start_watchdog02(void);
 extern int start_sw_devled(void);
 extern void stop_sw_devled(void);
 #endif
-#if defined(RTAC1200G) || defined(RTAC1200GP)
+#if defined(RTAC1200G) || defined(RTAC1200GP) || defined(RTAC3100)
 extern void stop_wdg_monitor(void);
 extern int start_wdg_monitor(void);
 #endif

@@ -162,6 +162,16 @@ define(function(){
 					{url: "NULL", tabName: "__INHERIT__"}
 				] 
 			},
+			{
+				menuName: "Tools",
+				index: "menu_Tools",
+				tab: [
+					{url: "Tools_Sysinfo.asp", tabName: "Sysinfo"},
+					{url: "Tools_OtherSettings.asp", tabName: "Other Settings"},
+					{url: "Tools_K3Screen.asp", tabName: "<#K3Screen#>"},
+					{url: "NULL", tabName: "__INHERIT__"}
+				] 
+			},
 			/* ============================================================================================================ */
 			{
 				menuName: "<#menu5#>",

@@ -2238,6 +2238,20 @@ function display_manage_block(){
 					$("#manage_block").find(".manage_lacp").hide();
 				}
 
+			$("#manage_block").find(".manage_screen").show();
+			$("#manage_block").find(".manage_screen #screen").unbind("click");
+			$("#manage_block").find(".manage_screen #screen").click(function(e){
+				closeAllSelect();
+				e = e || event;
+				e.stopPropagation();
+				var url = "http://" + specific_node_data.ip + "/Tools_K3Screen.asp";
+				var window_width = 780;
+				var window_height = 650;
+				var window_top = screen.availHeight / 2 - window_height / 2;
+				var window_left = screen.availWidth / 2 - window_width / 2;
+				window.open(url, '_new' ,'width=' + window_width + ',height=' + window_height + ', top=' + window_top + ',left=' + window_left + ',menubar=no,scrollbars=yes,toolbar=no,resizable=no,status=no,location=no');
+			});
+
 				if(select_node_capability.usb){
 					$("#manage_block").find(".manage_usb_app").show();
 					$("#manage_block").find(".manage_usb_app #usb_app").unbind("click");
@@ -4312,6 +4326,13 @@ $(document).ready(initial_AiMesh);
 						</div>
 					</div>
 					<div class="manage_sub_item_bg"></div>
+				</div>
+
+				<div class="manage_screen horizontal_line manage_function_item">
+					<div class="manage_common_title manage_common_separate_bg left"><#screen_settings#></div>
+					<div class="manage_common_separate_bg right">
+						<div id="screen" class="arrow_icon right"></div>
+					</div>
 				</div>
 
 				<div class="manage_usb_app horizontal_line manage_function_item">
