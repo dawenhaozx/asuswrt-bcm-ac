@@ -343,13 +343,18 @@ mips_rev =
 KERN_SIZE_OPT ?= y
 endif
 
+ifeq ($(ROMCFE),y)
+	export SUFFIX := _cfe
+else
+	export SUFFIX :=
+endif
 ifeq ($(FAKEID),y)
-export IMGNAME := $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(FORCE_SN)_$(SWPJVER)$(FORCE_EN)$(ISPCTRL_POSTFIX)
+export IMGNAME := $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(FORCE_SN)_$(SWPJVER)$(FORCE_EN)$(ISPCTRL_POSTFIX)$(SUFFIX)
 else ifneq ($(CUSTOM_MODEL),)
-export IMGNAME := $(CUSTOM_MODEL)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO)$(ISPCTRL_POSTFIX)
+export IMGNAME := $(CUSTOM_MODEL)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO)$(ISPCTRL_POSTFIX)$(SUFFIX)
 else
 #export IMGNAME := $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO)$(ISPCTRL_POSTFIX)
-export IMGNAME := $(SWRTVER)_$(SWRTEXTENDNO)-g$(shell git log --pretty=format:'%h' -n 1|sed -e "s,\([0-9a-z]\{7\}\)[0-9a-z]*,\1,")$(EXSTRING)
+export IMGNAME := $(SWRTVER)_$(SWRTEXTENDNO)-g$(shell git log --pretty=format:'%h' -n 1|sed -e "s,\([0-9a-z]\{7\}\)[0-9a-z]*,\1,")$(EXSTRING)$(SUFFIX)
 endif
 
 ifeq ($(OPDBG),y)
@@ -698,9 +703,14 @@ ifeq ($(RTCONFIG_REALTEK),y)
 	@echo "" > $(SRCBASE)/build.log
 endif
 	echo ""
-	echo "Building $(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO).trx"
+	echo "Building $(IMGNAME)"
 	echo ""
 	
+ifeq ($(ROMCFE),y)
+	@$(MAKE) -C cfe clean
+	@$(MAKE) -C cfe
+endif
+
 ifeq ($(HND_ROUTER),y)
 	@rm -rf image
 	@ln -sf targets/${PROFILE} image
@@ -819,7 +829,12 @@ image:
 		exit 1; \
 	fi
 
-	@rm -f image/$(BUILD_NAME)_$(KERNEL_VER).$(FS_VER)_$(SERIALNO).trx
+	@echo "-------- clean old trx --------"
+ifeq ($(FAKEID),y)
+	rm -f image/$(BUILD_NAME)_$(FORCE_SN)_$(SWPJVER)$(FORCE_EN)$(BUILDREV)*.trx
+else
+	rm -f image/$(BUILD_NAME)_$(SERIALNO)_$(SWPJVER)$(EXTENDNO)$(BUILDREV)*.trx
+endif
 ifeq ($(RTCONFIG_REALTEK),y)
 ifeq ($(RTL8198D),y)
 	@rsync -aPq $(PLATFORMDIR)/target/ $(RSDKDIR)/romfs
