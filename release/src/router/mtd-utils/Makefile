@@ -38,9 +38,9 @@ SCRIPTS = flash_eraseall
 ifeq ($(ALPINE)$(LANTIQ),y)
 # BINS =
 else
-BINS =
+BINS = flash_erase nanddump nandwrite nandtest
 endif
-SCRIPTS =
+SCRIPTS = flash_eraseall
 
 ifeq ($(UBIFS),y)
 BINS += mkfs.ubifs/mkfs.ubifs

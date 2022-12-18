@@ -59,6 +59,14 @@
 #endif
 #endif
 
+#ifdef RTAC3100
+#define JFFS2_MTD_NAME	"brcmnand"
+#define UBI_DEV_NUM	"0"
+#define UBI_DEV_PATH	"/dev/ubi0"
+#define LEBS		0x1F000		/* 124 KiB */
+#define NUM_OH_LEB	24		/* for ubifs overhead */
+#endif
+
 static void error(const char *message)
 {
 	char s[512];
@@ -142,6 +150,11 @@ static inline int ubifs_erase(int dev, int part)
 
 void start_ubifs(void)
 {
+	if (!nvram_match("jffs2_on", "1")) {
+		notice_set("jffs", "");
+		return;
+	}
+
 	int format = 0;
 	char s[256];
 	int dev, part, size;
@@ -150,7 +163,7 @@ void start_ubifs(void)
 #if defined(RTCONFIG_TEST_BOARDDATA_FILE)
 	int r;
 #endif
-#ifdef RTCONFIG_MTK_NAND
+#if defined(RTCONFIG_MTK_NAND) || defined(RTAC3100)
 	int mtd_part = 0, mtd_size = 0;
 	char dev_mtd[] = "/dev/mtdXXX";
 #endif
@@ -171,7 +184,7 @@ void start_ubifs(void)
 		return;
 #endif
 
-#ifdef RTCONFIG_MTK_NAND
+#if defined(RTCONFIG_MTK_NAND) || defined(RTAC3100)
 	if (!mtd_getinfo(JFFS2_MTD_NAME, &mtd_part, &mtd_size)) return;
 
 	_dprintf("*** ubifs: %s (%d, %d)\n", UBIFS_VOL_NAME, mtd_part, mtd_size);
@@ -183,19 +196,26 @@ void start_ubifs(void)
 		eval("ubiattach", "-p", dev_mtd, "-d", UBI_DEV_NUM);
 	}
 
+	unsigned int num_leb = 0, num_avail_leb = 0, vol_size = 0;
+	num_leb = mtd_size >> 17;			/* compute number of leb divde by 128KiB */
 	if (ubi_getinfo(UBIFS_VOL_NAME, &dev, &part, &size) == 1) {	//ubi volume not found, format it and create volume
-		unsigned int num_leb = 0, num_avail_leb = 0, vol_size = 0;
-		
+
 		_dprintf("*** ubifs: ubi volume not found\n");
 
+#ifdef RTAC3100
+		/* format ubi */
+		snprintf(dev_mtd, sizeof(dev_mtd), "/dev/mtd%d", mtd_part);
+		_dprintf("*** ubifs: format (%s)\n", dev_mtd);
+		eval("ubiformat", "-y", dev_mtd);
+#else
 		/* mtd erase on UBIFS_VOL_NAME first */
 		if (mtd_erase(JFFS2_MTD_NAME)) {
 			error("formatting");
 			return;
 		}
+#endif
 
 		/* compute jffs2's volume size */
-		num_leb = mtd_size >> 17;			/* compute number of leb divde by 128KiB */
 		num_avail_leb = num_leb - NUM_OH_LEB;
 		vol_size = (num_avail_leb * LEBS) >> 10;	/* convert to KiB unit */
 		if (vol_size > 0) {
@@ -211,7 +231,7 @@ void start_ubifs(void)
 
 			/* make ubi volume */
 			_dprintf("*** ubifs: create jffs2 volume\n");
-			eval("ubimkvol", UBI_DEV_PATH, "-s", vol_size_s, "-N", UBIFS_VOL_NAME);
+			eval("ubimkvol", UBI_DEV_PATH, "-N", UBIFS_VOL_NAME, "-m");
 			format = 1;
 		}
 	}
@@ -305,7 +325,7 @@ void start_ubifs(void)
 			error("unlocking");
 			return;
 		}
-#ifdef RTCONFIG_MTK_NAND
+#if defined(RTCONFIG_MTK_NAND) || defined(RTAC3100)
 		nvram_unset("ubifs_clean_fs");
 		nvram_commit_x();
 #endif
@@ -314,11 +334,10 @@ void start_ubifs(void)
 
 	if (mount(s, UBIFS_MNT_DIR, UBIFS_FS_TYPE, MS_NOATIME, "") != 0) {
 		_dprintf("*** ubifs mount error\n");
-		if (ubifs_erase(dev, part)) {
-			error("formatting");
-			return;
-		}
-
+		eval("ubidetach", "-p", dev_mtd);
+		eval("ubiformat", "-y", dev_mtd);
+		eval("ubiattach", "-p", dev_mtd, "-d", UBI_DEV_NUM);
+		eval("ubimkvol", UBI_DEV_PATH, "-N", UBIFS_VOL_NAME, "-m");
 		format = 1;
 		if (mount(s, UBIFS_MNT_DIR, UBIFS_FS_TYPE, MS_NOATIME, "") != 0) {
 			_dprintf("*** ubifs 2-nd mount error\n");
@@ -363,7 +382,8 @@ BRCM_UBI:
 	userfs_prepare(UBIFS_MNT_DIR);
 	notice_set("ubifs", format ? "Formatted" : "Loaded");
 
-	if (((p = nvram_get("ubifs_exec")) != NULL) && (*p != 0)) {
+#if 1 /* enable legacy & asus autoexec */
+	if (nvram_get_int("ubifs_exec") == 1 || nvram_get_int("jffs2_exec") == 1) {
 		chdir(UBIFS_MNT_DIR);
 		system(p);
 		chdir("/");
@@ -382,6 +402,11 @@ BRCM_UBI:
 	if ((r = mount(UBIFS_MNT_DIR "/firmware", "/lib/firmware", NULL, MS_BIND, NULL)) != 0)
 		_dprintf("%s: bind mount " UBIFS_MNT_DIR "/firmware fail! (r = %d)\n", __func__, r);
 #endif
+
+	if (!check_if_dir_exist("/jffs/scripts/")) mkdir("/jffs/scripts/", 0755);
+	if (!check_if_dir_exist("/jffs/configs/")) mkdir("/jffs/configs/", 0755);
+	if (!check_if_dir_exist("/jffs/addons/")) mkdir("/jffs/addons/", 0755);
+	if (!check_if_dir_exist(UPLOAD_CERT_FOLDER)) mkdir(UPLOAD_CERT_FOLDER, 0600);
 
 #ifdef RTCONFIG_JFFS_NVRAM
 	system("rm -rf /jffs/nvram_war");
